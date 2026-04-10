@@ -53,22 +53,71 @@ Master total:                   5050
 
 **Concepts:** Domain decomposition, master-worker pattern, `MPI_Send`/`MPI_Recv` gather
 
+### Lesson 3 — Collective Operations (`l3_collectives.c`)
+
+Monte Carlo estimation of Pi using `MPI_Bcast`, `MPI_Reduce`, and `MPI_Allreduce`. Each process generates random samples independently, then collective operations aggregate the results.
+
+```
+$ mpirun -np 8 ./l3_collectives
+Processes: 8, Samples: 1000000
+Pi estimate: 3.14182400 (error: 2.32e-04)
+  [rank 0] Pi via Allreduce: 3.141824
+  [rank 1] Pi via Allreduce: 3.141824
+  ...
+```
+
+**Concepts:** `MPI_Bcast`, `MPI_Reduce`, `MPI_Allreduce`, `MPI_SUM`, Monte Carlo methods, reproducible seeding
+
+### Lesson 4 — Parallel Heat Equation Solver (`l4_heat_equation.c`)
+
+1D heat equation (dT/dt = alpha * d²T/dx²) solved with explicit finite differences across distributed processes. Each process owns a subdomain and exchanges boundary data via ghost cells.
+
+```
+Domain decomposition (4 processes):
+
+|  Proc 0  |  Proc 1  |  Proc 2  |  Proc 3  |
+|←─ghost─→||←─ghost─→||←─ghost─→||←─ghost─→|
+T=100                                      T=0
+(Dirichlet)                          (Dirichlet)
+```
+
+```
+$ mpirun -np 4 ./l4_heat
+CFL number: 0.4000 (must be < 0.5)
+
+Final temperature distribution:
+x          T(x)
+──────────────────────
+0.0000     100.0000
+0.0500     95.0000
+0.1000     90.0000
+...
+0.9500     5.0000
+```
+
+**Concepts:** Domain decomposition, ghost cell exchange, `MPI_Sendrecv`, `MPI_Gather`, `MPI_PROC_NULL`, CFL stability condition, Forward Euler scheme
+
 ## Build & Run
 
 ```bash
 mpicc -o l1_basics l1_basics.c
 mpicc -o l2_ring l2_ring.c
 mpicc -o l2_sharing l2_sharing_partition.c
+mpicc -o l3_collectives l3_collectives.c -lm
+mpicc -o l4_heat l4_heat_equation.c -lm
 
 mpirun -np 4 ./l1_basics
 mpirun -np 4 ./l2_ring
 mpirun -np 4 ./l2_sharing
+mpirun -np 8 ./l3_collectives
+mpirun -np 4 ./l4_heat
 ```
 
 ## Requirements
 
 - OpenMPI or MPICH
 - GCC with MPI headers (`mpi.h`)
+- `-lm` for math library (lessons 3–4)
 
 ## Context
 
